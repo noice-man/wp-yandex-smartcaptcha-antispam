@@ -1,0 +1,5 @@
+.ysca-field{position:relative;margin:14px 0;max-width:100%;box-sizing:border-box}
+.ysca-widget{max-width:100%}
+.ysca-caption{font-size:12px;line-height:1.5;color:#555;margin:6px 0 8px}
+.ysca-error{font-size:13px;color:#b42318;margin:8px 0}
+.ysca-honeypot{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}

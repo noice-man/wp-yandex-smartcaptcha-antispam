@@ -2,9 +2,9 @@
 /**
  * Plugin Name: Yandex SmartCaptcha AntiSpam
  * Plugin URI: https://ворд-пресс.рф/plugins/yandex-smartcaptcha-antispam/
- * Update URI: https://xn----ctbgf6biedka.xn--p1ai/plugins/wp-yandex-smartcaptcha-antispam/
+ * Update URI: https://xn----ctbgf6biedka.xn--p1ai/plugins/yandex-smartcaptcha-antispam/
  * Description: Невидимая Yandex SmartCaptcha для стандартных форм WordPress с переходом к видимому виджету при повторных отправках.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Valery Molodtsov
@@ -16,7 +16,7 @@
 if (!defined('ABSPATH')) { exit; }
 
 final class YSCA_AntiSpam {
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
     const OPTION = 'ysca_antispam_settings';
     const STATS = 'ysca_antispam_stats';
     const HISTORY = 'ysca_antispam_history';
@@ -395,7 +395,7 @@ function ysca_verify_custom($context) {
 /** WPR Update Hub v1.1: opt-in install telemetry, no forced auto-updates. */
 require_once __DIR__ . '/includes/wpr-updates-client.php';
 WPR_Updates_Client_V2::register(__FILE__, array(
-    'slug' => 'wp-yandex-smartcaptcha-antispam',
+    'slug' => 'yandex-smartcaptcha-antispam',
     'server' => 'https://xn----ctbgf6biedka.xn--p1ai',
     'telemetry' => true,
 ));

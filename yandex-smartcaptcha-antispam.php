@@ -401,5 +401,5 @@ if ( is_readable( $puc_file ) ) {
         __FILE__,
         'yandex-smartcaptcha-antispam'
     );
-    $puc_checker->getVcsApi()->enableReleaseAssets( '/^yandex-smartcaptcha-antispam-v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip$/i' );
+    $puc_checker->getVcsApi()->enableReleaseAssets( '/^yandex-smartcaptcha-antispam-v[0-9]+\.[0-9]+\.[0-9]+\.zip$/i' );
 }

@@ -2,6 +2,7 @@
 /**
  * Plugin Name: Yandex SmartCaptcha AntiSpam
  * Plugin URI: https://ворд-пресс.рф/plugins/yandex-smartcaptcha-antispam/
+ * Update URI: https://github.com/noice-man/wp-yandex-smartcaptcha-antispam/
  * Description: Невидимая Yandex SmartCaptcha для стандартных форм WordPress с переходом к видимому виджету при повторных отправках.
  * Version: 1.0.0
  * Requires at least: 6.0
@@ -389,4 +390,16 @@ YSCA_AntiSpam::init();
  */
 function ysca_verify_custom($context) {
     return YSCA_AntiSpam::verify_submission($context);
+}
+
+/** GitHub release asset updater (library bundled in distribution ZIP). */
+$puc_file = plugin_dir_path( __FILE__ ) . 'plugin-update-checker/plugin-update-checker.php';
+if ( is_readable( $puc_file ) ) {
+    require_once $puc_file;
+    $puc_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/noice-man/wp-yandex-smartcaptcha-antispam/',
+        __FILE__,
+        'yandex-smartcaptcha-antispam'
+    );
+    $puc_checker->getVcsApi()->enableReleaseAssets( '/^yandex-smartcaptcha-antispam-v[0-9]+\\.[0-9]+\\.[0-9]+\\.zip$/i' );
 }

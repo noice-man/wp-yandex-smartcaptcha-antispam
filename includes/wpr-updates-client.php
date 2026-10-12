@@ -1,6 +1,6 @@
 <?php
 /**
- * WPR Updates Client SDK 1.1.2 (manual update refresh), WordPress >= 5.8, PHP >= 7.4.
+ * WPR Updates Client SDK 1.1.3 (clear telemetry explanation), WordPress >= 5.8, PHP >= 7.4.
  * Public metadata updates with 12-18h jittered cache and ETag/304.
  * Explicitly opt-in anonymous usage telemetry, never auto-enabled.
  */
@@ -148,15 +148,16 @@ final class WPR_Updates_Client_V2 {
     public static function settings_page() {
         if (!current_user_can('manage_options')) {return;}
         $on=(bool)get_option(self::CONSENT_OPTION,false);
-        echo '<div class="wrap"><h1>Статистика установок WPR</h1>';
-        echo '<p>По умолчанию статистика <strong>выключена</strong>. После включения плагины WPR отправляют на сервер обновлений раз в 7 дней псевдонимный случайный ID установки, slug и номер версии. Адрес сайта, IP, имя администратора, посещаемость и персональные данные в запрос не включаются. Веб-сервер и прокси могут вести собственные стандартные HTTP-логи.</p>';
-        echo '<p>Отключение остановит отправку данных; SDK попытается удалить прежние записи на сервере. Иначе неактивные записи очищаются через 90 дней.</p>';
+        echo '<div class="wrap"><h1>Статистика установленных версий плагинов</h1>';
+        echo '<p>Это добровольная отправка <strong>разработчику плагинов, размещённых на ворд-пресс.рф</strong>, сведений о том, какие версии его плагинов сейчас используются. Это помогает проверять совместимость и выпускать обновления, которые корректно устанавливаются в том числе поверх старых версий.</p>';
+        echo '<p><strong>Что отправляется:</strong> название (slug) плагина, его установленная версия и случайный идентификатор установки. Примерно раз в 7 дней, только после вашего согласия. Имя пользователя, адрес сайта, содержимое сайта и показатели посещаемости не передаются в теле запроса. При сетевом соединении сервер может технически видеть IP-адрес и вести стандартный HTTP-журнал.</p>';
+        echo '<p><strong>Это не влияет на получение обновлений.</strong> Если не включать статистику, плагины продолжают проверять и устанавливать обновления обычным способом. При отключении отправка прекращается; клиент попробует удалить прежнюю запись, иначе она автоматически исчезнет через 90 дней без новых сигналов.</p>';
         echo '<form action="'.esc_url(admin_url('admin-post.php')).'" method="post">';
         wp_nonce_field('wpr_updates_telemetry_v2');
         echo '<input type="hidden" name="action" value="wpr_updates_telemetry_v2">';
-        echo '<label><input type="checkbox" name="consent" value="yes" '.checked($on,true,false).'> Разрешить анонимную статистику установок</label>';
+        echo '<label><input type="checkbox" name="consent" value="yes" '.checked($on,true,false).'> Добровольно сообщать разработчику установленные версии плагинов</label>';
         submit_button('Сохранить настройки');
-        echo '</form><p><small>Данные считаются на сервере WPR Update Hub и доступны только его администратору.</small></p></div>';
+        echo '</form><p><small>Сводка по версиям доступна только администратору WPR Update Hub на ворд-пресс.рф.</small></p></div>';
     }
     public static function save_settings() {
         if (!current_user_can('manage_options')) {wp_die('Forbidden');}

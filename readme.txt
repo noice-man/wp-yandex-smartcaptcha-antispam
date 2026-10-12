@@ -3,7 +3,7 @@ Contributors: noice-man
 Tags: captcha, spam, comments, login, yandex, security
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,6 +38,9 @@ No. On retries the plugin shows the standard visible checkbox widget, but Yandex
 By default the plugin does not block a submission on transport/HTTP failures, as recommended in Yandex docs. Invalid/missing tokens are always blocked. The fail-open behavior can be disabled.
 
 == Changelog ==
+= 1.0.2 =
+* Fix stable WordPress slug and WPR Update Hub package directory.
+
 = 1.0.1 =
 * Migrate plugin updates to WPR Update Hub v1.1.
 * Add optional, consent-based anonymous installation statistics.

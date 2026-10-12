@@ -1,6 +1,6 @@
 <?php
 /**
- * WPR Updates Client SDK 1.1.1 (compatibility patch), WordPress >= 5.8, PHP >= 7.4.
+ * WPR Updates Client SDK 1.1.2 (manual update refresh), WordPress >= 5.8, PHP >= 7.4.
  * Public metadata updates with 12-18h jittered cache and ETag/304.
  * Explicitly opt-in anonymous usage telemetry, never auto-enabled.
  */
@@ -210,4 +210,62 @@ final class WPR_Updates_Client_V2 {
         delete_option('wpr_updates_heartbeat_at_v2');
     }
 }
+}
+
+
+/**
+ * Fresh updates when an administrator explicitly clicks "Check again" in
+ * WordPress > Dashboard > Updates. Deliberately lives outside the V2 class
+ * guard: multiple WPR plugins on one site may load different SDK versions.
+ *
+ * Normal cron / background checks continue to use the 12-18 hour cache.
+ */
+if ( ! function_exists( 'wpr_updates_sdk_manual_refresh_v1' ) ) {
+    function wpr_updates_sdk_manual_refresh_v1() {
+        global $pagenow;
+
+        if ( ! is_admin()
+            || ! current_user_can( 'update_plugins' )
+            || 'update-core.php' !== $pagenow
+            || ! isset( $_GET['force-check'] )
+            || '1' !== (string) $_GET['force-check'] ) {
+            return;
+        }
+
+        if ( ! function_exists( 'get_plugins' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $changed = false;
+        foreach ( get_plugins() as $plugin_data ) {
+            $uri = isset( $plugin_data['UpdateURI'] ) ? (string) $plugin_data['UpdateURI'] : '';
+            $parts = wp_parse_url( $uri );
+            if ( ! is_array( $parts ) || ( $parts['scheme'] ?? '' ) !== 'https' ) {
+                continue;
+            }
+            $host = strtolower( (string) ( $parts['host'] ?? '' ) );
+            if ( 'xn----ctbgf6biedka.xn--p1ai' !== $host
+                || ! preg_match( '#^/plugins/([a-z0-9]+(?:-[a-z0-9]+)*)/?$#D', (string) ( $parts['path'] ?? '' ), $matches ) ) {
+                continue;
+            }
+
+            $server = 'https://' . $host;
+            $key = 'wpr_upd_cache_v2_' . substr( md5( $server . '|' . $matches[1] ), 0, 20 );
+            $cache = get_option( $key, array() );
+
+            // Retain the last verified metadata/ETag, including the offline
+            // fallback, but remove the timer so SDK fetches the live Hub.
+            if ( is_array( $cache ) && $cache ) {
+                $cache['next_check'] = 0;
+                update_option( $key, $cache, false );
+            }
+            $changed = true;
+        }
+        if ( $changed ) {
+            // Also bypass WordPress's independent plugin-update transient.
+            // WordPress will fill it again on this update-core.php request.
+            delete_site_transient( 'update_plugins' );
+        }
+    }
+    add_action( 'admin_init', 'wpr_updates_sdk_manual_refresh_v1', 1 );
 }

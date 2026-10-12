@@ -66,4 +66,11 @@ jobs:
           zip -qr "$GITHUB_WORKSPACE/yandex-smartcaptcha-antispam-v$VERSION.zip" "yandex-smartcaptcha-antispam"
           cd "$GITHUB_WORKSPACE"
           unzip -tq "yandex-smartcaptcha-antispam-v$VERSION.zip"
-          gh release create "v$VERSION" "yandex-smartcaptcha-antispam-v$VERSION.zip" --target "$GITHUB_SHA" --title "yandex-smartcaptcha-antispam v$VERSION" --generate-notes
+          # User-facing release details, rather than commit-title summaries.
+          awk -v version="$VERSION" '
+            $0 == "= " version " =" {capture=1; next}
+            capture && /^= [0-9]+\.[0-9]+\.[0-9]+ =$/ {exit}
+            capture {print}
+          ' readme.txt > /tmp/wpr-release-notes.md
+          test -s /tmp/wpr-release-notes.md
+          gh release create "v$VERSION" "yandex-smartcaptcha-antispam-v$VERSION.zip" --target "$GITHUB_SHA" --title "yandex-smartcaptcha-antispam v$VERSION" --notes-file /tmp/wpr-release-notes.md

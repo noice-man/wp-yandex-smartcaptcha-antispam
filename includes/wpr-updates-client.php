@@ -1,6 +1,6 @@
 <?php
 /**
- * WPR Updates Client SDK 1.1.0, WordPress >= 5.8, PHP >= 7.4.
+ * WPR Updates Client SDK 1.1.1 (compatibility patch), WordPress >= 5.8, PHP >= 7.4.
  * Public metadata updates with 12-18h jittered cache and ETag/304.
  * Explicitly opt-in anonymous usage telemetry, never auto-enabled.
  */
@@ -36,15 +36,36 @@ final class WPR_Updates_Client_V2 {
             if ( $plugin_file !== $cfg['basename'] || !self::header_matches((string)($plugin_data['UpdateURI']??''),$cfg) ) {return $update;}
             $info = self::request($cfg);
             if ( !is_array($info) || empty($info['version']) || empty($plugin_data['Version']) ||
-                !version_compare((string)$info['version'], (string)$plugin_data['Version'], '>') ||
                 empty($info['download_url']) || !self::safe_download($info['download_url'],$cfg) ) {return false;}
             return array(
                 'id' => $plugin_data['UpdateURI'], 'slug'=>$cfg['slug'], 'version'=>$info['version'],
                 'url'=>!empty($info['homepage'])?$info['homepage']:$cfg['server'].'/plugins/'.$cfg['slug'].'/',
                 'package'=>$info['download_url'], 'tested'=>$info['tested']??'',
                 'requires'=>$info['requires']??'', 'requires_php'=>$info['requires_php']??'',
+                // WordPress decides whether to auto-update. No forced autoupdate.
             );
         }, 10, 4);
+        // Core hides the auto-update toggle for third-party plugins unless the
+        // update_plugins transient has response/no_update for their basename.
+        // An offline or not-yet-configured hub must not hide the manual toggle.
+        // This only marks update SUPPORT. It never invents an available update.
+        $mark_supported = static function($state) use ($cfg) {
+            if (!is_object($state)) {return $state;}
+            if (isset($state->response[$cfg['basename']]) || isset($state->no_update[$cfg['basename']])) {return $state;}
+            $header=get_file_data($cfg['file'],array('Version'=>'Version','UpdateURI'=>'Update URI'),'plugin');
+            $version=(string)($header['Version']??'');
+            $uri=(string)($header['UpdateURI']??'');
+            if (!$version || !self::header_matches($uri,$cfg)) {return $state;}
+            if (!isset($state->no_update) || !is_array($state->no_update)) {$state->no_update=array();}
+            $state->no_update[$cfg['basename']] = (object)array(
+                'id'=>$uri,'plugin'=>$cfg['basename'],'slug'=>$cfg['slug'],
+                'version'=>$version,'new_version'=>$version,
+                'url'=>$cfg['server'].'/plugins/'.$cfg['slug'].'/'
+            );
+            return $state;
+        };
+        add_filter('site_transient_update_plugins',$mark_supported,20);
+        add_filter('pre_set_site_transient_update_plugins',$mark_supported,20);
         add_filter('plugins_api',static function($result,$action,$args) use ($cfg) {
             if ('plugin_information'!==$action || !is_object($args) || ($args->slug??'')!==$cfg['slug']) {return $result;}
             if ( !function_exists('get_plugins') ) {require_once ABSPATH.'wp-admin/includes/plugin.php';}
@@ -73,6 +94,7 @@ final class WPR_Updates_Client_V2 {
         return 'wpr_upd_cache_v2_'.substr(md5($cfg['server'].'|'.$cfg['slug']),0,20);
     }
     private static function jitter($cfg) {
+        // Deterministic stagger; no random revalidation burst or identifying token in requests.
         return (12 + (hexdec(substr(md5($cfg['basename'].'|'.home_url('/')),0,2)) % 7)) * HOUR_IN_SECONDS;
     }
     private static function request($cfg) {
@@ -106,6 +128,7 @@ final class WPR_Updates_Client_V2 {
         } elseif (404===$code) {
             $new=array('data'=>null,'etag'=>'','next_check'=>$now+self::jitter($cfg));
         } else {
+            // Fall back to last known metadata for up to seven days during outages.
             if ( !empty($new['good_at']) && $new['good_at']+7*DAY_IN_SECONDS<$now ) {unset($new['data']);}
             $new['next_check']=$now+30*MINUTE_IN_SECONDS;
         }

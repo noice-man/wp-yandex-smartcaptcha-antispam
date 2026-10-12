@@ -46,7 +46,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          ROOT="/tmp/wp-plugin-package/wp-yandex-smartcaptcha-antispam"
+          ROOT="/tmp/wp-plugin-package/yandex-smartcaptcha-antispam"
           mkdir -p "$ROOT"
           for f in *.php readme.txt README.md CHANGELOG.md LICENSE; do
             if test -f "$f"; then cp "$f" "$ROOT/"; fi
@@ -63,7 +63,7 @@ jobs:
           find "$ROOT" -type l -print -quit | grep -q . && { echo 'Symlinks forbidden'; exit 1; } || true
           find "$ROOT" -name '*.php' -print0 | xargs -0 -n1 php -l
           cd /tmp/wp-plugin-package
-          zip -qr "$GITHUB_WORKSPACE/wp-yandex-smartcaptcha-antispam-v$VERSION.zip" "wp-yandex-smartcaptcha-antispam"
+          zip -qr "$GITHUB_WORKSPACE/yandex-smartcaptcha-antispam-v$VERSION.zip" "yandex-smartcaptcha-antispam"
           cd "$GITHUB_WORKSPACE"
-          unzip -tq "wp-yandex-smartcaptcha-antispam-v$VERSION.zip"
-          gh release create "v$VERSION" "wp-yandex-smartcaptcha-antispam-v$VERSION.zip" --target "$GITHUB_SHA" --title "wp-yandex-smartcaptcha-antispam v$VERSION" --generate-notes
+          unzip -tq "yandex-smartcaptcha-antispam-v$VERSION.zip"
+          gh release create "v$VERSION" "yandex-smartcaptcha-antispam-v$VERSION.zip" --target "$GITHUB_SHA" --title "yandex-smartcaptcha-antispam v$VERSION" --generate-notes

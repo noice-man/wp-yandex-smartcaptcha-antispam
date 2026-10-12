@@ -1,0 +1,36 @@
+name: Build WordPress plugin release
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare and validate plugin ZIP
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          test "${TAG_NAME}" != "${VERSION}" || { echo 'Expected tag vX.Y.Z'; exit 1; }
+          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          grep -Eq "^ \\* Version: ${VERSION}$" "yandex-smartcaptcha-antispam.php" || { echo 'Plugin header version does not match tag'; exit 1; }
+          test -f "yandex-smartcaptcha-antispam.php"
+          curl -fsSL --retry 3 https://github.com/YahnisElsts/plugin-update-checker/archive/refs/tags/v5.7.tar.gz -o /tmp/puc.tar.gz
+          mkdir -p /tmp/puc-src
+          tar -xzf /tmp/puc.tar.gz -C /tmp/puc-src
+          mkdir -p "/tmp/plugin-build/yandex-smartcaptcha-antispam/plugin-update-checker"
+          cp -a /tmp/puc-src/plugin-update-checker-5.7/. "/tmp/plugin-build/yandex-smartcaptcha-antispam/plugin-update-checker/"
+          test -f "/tmp/plugin-build/yandex-smartcaptcha-antispam/plugin-update-checker/plugin-update-checker.php"
+          for file in *.php readme.txt includes assets languages templates; do
+            if test -e "$file"; then cp -a "$file" "/tmp/plugin-build/yandex-smartcaptcha-antispam/"; fi
+          done
+          cd /tmp/plugin-build
+          zip -q -r "${GITHUB_WORKSPACE}/yandex-smartcaptcha-antispam-${TAG_NAME}.zip" "yandex-smartcaptcha-antispam"
+          cd "${GITHUB_WORKSPACE}"
+          gh release upload "${TAG_NAME}" "yandex-smartcaptcha-antispam-${TAG_NAME}.zip" --clobber
